@@ -3,7 +3,7 @@
 
 
 
-# **************************************************************************
+# ***********************************************************
 # Data Summary Using Query
 
 ### Department wise Expense
@@ -194,7 +194,14 @@ This can be used with `ArrayFormula` for best usage to give below type of Data
 | Administration → Operational Maintenance → Electricity Bill     | Administration | Operational Maintenance | Electricity Bill     |
 | IS → Hardware → Cover / Protector                               | IS             | Hardware                | Cover / Protector    |
 
-#
+# ***********************************************************
+# Conditional Formatting
+
+### Checks if the value in cell B2 is a number and if the value in cell K2 is blank, 
+###### Used to set K2 cell bg to red if the payment date K2 is empty and Trascation date B2 is there
+```
+=AND(ISNUMBER(B2), ISBLANK(K2))
+```
 
 ### This formula checks if the day of the week for each date in column A is either Sunday (1) or Saturday (7), Used for conditional Formatting
 ```
@@ -222,10 +229,12 @@ IFERROR(value, value_if_error)
 `=IFERROR(INDEX(B2:B10, MATCH(D1, A2:A10, 0)), "Not Found")`
 ###### Above formula searches for the value in D1 within the range A2:A10. If found, it returns the corresponding value from B2:B10. If an error occurs (e.g., the value isn't found), it returns "Not Found".
 
-# ==============================================
-
+# ***********************************************************
 # References for making this type of Readme.md file Online
 1. https://markdownlivepreview.com/ - Preview md file online
 
 2. https://www.tablesgenerator.com/markdown_tables - Copy Paste Table / CSV data online and convert to md file data 
+
+### Others
+3. https://10015.io/tools/code-to-image-converter - Code to Image Converter
 
