@@ -1,4 +1,8 @@
 
+### 1may25_925pm
+- `sendTableEmail_final_1may25_738pm.js`
+    - This script adds a custom menu to a Google Spreadsheet that allows authorized users to send an email containing a formatted HTML table of data from the active sheet. 
+    - The email includes options for CC and BCC, and it can be configured to send only visible columns or all columns from the sheet.
 
 
 
