@@ -1,4 +1,11 @@
 
+### 2may25_925pm
+- `wrapText_in_edited_cell.js`
+    - Automatically enables "Wrap Text" formatting for any cell that is edited and not left empty, ensuring all content is visible.
+    - On opening the sheet, sets the active cell to 10 rows below the last filled cell in column C (if any), for quick navigation.
+    - Checks for duplicate Bug IDs in column A (when a cell in column A is edited):
+        - If a duplicate is found, shows an alert, highlights the cell, and marks it as "Duplicate".
+    - Designed for sheets where column A tracks unique Bug IDs and column C is actively updated.
 ### 1may25_925pm
 - `sendTableEmail_final_1may25_738pm.js`
     - This script adds a custom menu to a Google Spreadsheet that allows authorized users to send an email containing a formatted HTML table of data from the active sheet. 
