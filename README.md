@@ -1,4 +1,16 @@
 
+### 15may25_846am
+- `pre_post_hotfix_release_email_merged.js`
+    - Adds 6 different buttons for drafting and sending emails for `pre`, `post` and `hotfix` release communication over email.
+    - Subject will have timestamp
+    - subject will support emojis
+    - Confuguration Options
+        - users who can see custom menu button.
+        - subject for each email.
+        - pretable content for each email.
+        - posttable content is same now for all email, but can be configured.
+        - whether to send visible columns only or hidden columns as well.
+        
 ### 2may25_925pm
 - `wrapText_in_edited_cell.js`
     - Automatically enables "Wrap Text" formatting for any cell that is edited and not left empty, ensuring all content is visible.
