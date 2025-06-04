@@ -1,4 +1,54 @@
 
+### 4june25_1206m
+- `auto_id_generate_regenerate_on_any_change.js` ✅
+
+    - **Description**: 
+        - Auto-updates IDs in Column A for sheet name ending with word `-Expenses` after any change   (edit, row insert, row delete, paste). Includes an `Expense Tools` menu for manual ID regeneration wheenver you want.
+
+    - **Features**:
+      - Generates unique IDs in Column A based on non-empty Column B entries.
+      - ID format: `[XX]-[number]` (e.g., `AD-1` for `Admin-Expenses` sheet).
+      - Updates IDs dynamically on any spreadsheet change via `onChange` trigger.
+      - Supports manual ID regeneration through the "Expense Tools" menu.
+      - Syncs IDs with non-empty rows in Column B.
+
+    - **Setup**:
+      1. Open the script editor in Google Sheets (`Extensions > Apps Script`).
+      2. Paste the script content.
+      3. Add a trigger:
+         - Click the clock icon (Triggers).
+         - Select `+ Add Trigger`.
+         - Choose Choose which function to run - `onChange`
+         - Choose which deployment should run - `Head`
+         - Select event source - `From spreadsheet`
+         - Select event type - `On change`
+         - Click on `Save` to save trigger.
+      4. Save the script and refresh the sheet to access the "Expense Tools" menu.
+
+    - **Notes**:
+      - Assumes the first row is a header; processes data from row 2.
+      - Works only on sheets ending with "-Expenses".
+      - Shows an alert if manual regeneration is attempted on a non-compatible sheet.
+
+---
+
+- `auto_id_generate_regenerate_on_edit_and_add_row.js` ⭕
+    - Auto-generates unique IDs in Column A based on entries in Column B for sheets ending with `-Expenses`.
+    - IDs use the format [XX]-[number], where XX is the sheet prefix (e.g., AD-1).
+    - Adds a custom `Expense Tools` menu on top in G-sheet to manually regenerate all IDs.
+    - Efficiently updates all IDs at once and ensures IDs stay in sync with non-empty rows in Column B.
+    - ID will be generated and modified automatically in below case
+        - editing column B ( i.e ususally a Expense date) - very normal case 😆
+        - adding a row in between, then you add date in that row so it will be auto generated and changed also for adjacent row id's.
+        - `NOT WORKS IF any row or rows get deleted in Bulk, Adjacent Ids will not be updated 😑`
+
+---
+
+- `auto_generate_id_on_edit.js` - ⁉️ have some issues 
+    - Auto-generates unique IDs in Column A when a value is entered in Column B, for sheet name ending with `-Expenses`.
+    - ID format: [XX]-[number], where XX is the sheet prefix (e.g., AD-1).
+    - IDs update dynamically and clear if Column B is empty.
+
 ### 15may25_846am
 - `pre_post_hotfix_release_email_merged.js`
     - Adds 6 different buttons for drafting and sending emails for `pre`, `post` and `hotfix` release communication over email.
