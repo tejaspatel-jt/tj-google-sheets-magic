@@ -1,5 +1,29 @@
 
-### 4june25_1206m
+### 7july25_554pm
+- `combine_multiple_sheets_data_with_diff_headers_into_one.js`
+    - Combines data from all sheets (excluding ❌ and specified sheets) into a single `CombinedData` sheet, aligning different headers automatically.
+    - Adds a custom menu for easy access.
+
+- `freeze.js`
+    - Adds a menu to freeze the first row in all sheets with one click.
+    - Useful for keeping headers visible during scrolling.
+
+- `notifications.js`
+    - Adds a menu with options to show various toasts and alerts in Google Sheets.
+    - Toasts
+        - Simple Toast
+        - Toast with Title
+        - Toast with Custom Duration
+        - Toast Until Clicked
+    - Alert
+        - OK Alert
+        - OK/Cancel Alert
+        - Yes/No Alert
+        - Yes/No/Cancel Alert
+        - Yes/No/Cancel Alert
+        - Alert with Title
+
+### 4june25_1206pm
 - `auto_id_generate_regenerate_on_any_change.js` ✅
 
     - **Description**: 
