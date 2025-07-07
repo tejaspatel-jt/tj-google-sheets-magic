@@ -3,6 +3,7 @@
 - `combine_multiple_sheets_data_with_diff_headers_into_one.js`
     - Combines data from all sheets (excluding ❌ and specified sheets) into a single `CombinedData` sheet, aligning different headers automatically.
     - Adds a custom menu for easy access.
+    - Data Processing Time will be displayed once all sheet data combined into one.
 
 - `freeze.js`
     - Adds a menu to freeze the first row in all sheets with one click.
@@ -97,6 +98,24 @@
     - This script adds a custom menu to a Google Spreadsheet that allows authorized users to send an email containing a formatted HTML table of data from the active sheet. 
     - The email includes options for CC and BCC, and it can be configured to send only visible columns or all columns from the sheet.
 
+## Git Things 🌿
+
+```bash
+# Original URL
+https://github.com/tejaspatel-jt/tj-google-sheets-magic
+
+# Change origin with specific git account.
+git remote set-url origin https://tejaspatel-jt@github.com/tejaspatel-jt/tj-google-sheets-magic.git
+
+# Update last Push + select branch as nothing after origin, NO master NO main 😆 (WIDELY USED )
+git add . && git commit --amend --no-edit && git push --force origin
+
+# update last push and last commit msg too ✅
+git add . && git commit --amend -m "<MODIFIED COMMMIT MSG>" && git push --force origin
+
+# Make Local Repo to Match with Remote Repo (No Extra Commits) - If working on same repo from 2 machines.
+git fetch origin && git reset --hard origin/main
+```
 
 
 

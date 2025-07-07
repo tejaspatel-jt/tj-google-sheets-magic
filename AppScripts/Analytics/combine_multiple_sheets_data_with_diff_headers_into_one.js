@@ -31,6 +31,9 @@ function mergeSheetsByHeaders() {
   //ss.toast('Combining data, please wait...', 'Info', 5);
   ss.toast('Please wait while Combining data from all the sheets.. \n YOU WILL BE NOTIFIED ONCE DONE !', '⚠️ Attention ⚠️', -1);
 
+  // Start timing
+  var startTime = new Date();
+
   var allSheets = ss.getSheets();
   var allHeaders = [];
   var dataRows = [];
@@ -88,7 +91,21 @@ function mergeSheetsByHeaders() {
     outSheet.getRange(2, 1, dataRows.length, allHeaders.length).setValues(dataRows);
   }
 
-  // Show alert when done
-  ui.alert('Data combined successfully! ✅');
+  // End timing
+  var endTime = new Date();
+  var durationMs = endTime - startTime;
+  var seconds = Math.floor((durationMs / 1000) % 60);
+  var minutes = Math.floor((durationMs / (1000 * 60)) % 60);
+  var durationStr = '';
+  if (minutes > 0) {
+    durationStr += minutes + ' min' + (minutes > 1 ? 's' : '');
+    if (seconds > 0) durationStr += ' ';
+  }
+  if (seconds > 0 || minutes === 0) {
+    durationStr += seconds + ' sec' + (seconds !== 1 ? 's' : '');
+  }
+
+  // Show alert when done, with duration
+  ui.alert('Data combined successfully! ✅\n\nTime taken: ' + durationStr);
 
 }
