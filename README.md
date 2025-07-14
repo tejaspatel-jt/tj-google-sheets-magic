@@ -1,4 +1,44 @@
 
+### 14july25_943pm
+- `5_combile_mulitple_sheets_data_with_batch_processing_progress.js` ✅✅
+    - This script provides 4 separate utility functions for Google Sheets
+        - **Freeze First Row in All Sheets**
+            - The function iterates through all sheets and sets the first row as frozen.
+        - **Combine Data in Batches (Exclude ❌ and Specified Sheets)**
+            - The script collects all unique headers from the sheets and aligns the data accordingly.
+            - The combined data is placed in a new sheet named `CombinedData`.
+            - The script processes sheets in batches (default batch size is 3) to avoid timeouts.
+            - It maintains a progress state using script properties to handle large datasets without losing progress.
+            - shows alert after each batch is processed, indicating how many sheets were processed and how many remain.
+            - It skips completely empty rows and fills in missing columns with blanks.
+        - **Auto-Fill Company Country**
+            - If a city has a corresponding country, it fills in the country for rows where it is missing.
+            - It highlights the filled 'Company Country' cells with a light red background.
+        - **Create Filter_CombinedData Sheet**
+            - The headers are copied from the "CombinedData" sheet and placed vertically.
+            - Each header has a corresponding checkbox for filtering purposes.
+        - **Show Batch Combine Progress**
+            - Displays an alert showing processed and unprocessed sheets.
+            - This helps users track the progress of the batch combining operation.
+            - shows processed sheets with a "✅" and unprocessed sheets with a "⭕".
+            - If the "CombinedData" sheet is missing, it resets all progress properties and considers all sheets as unprocessed.
+
+    - Look How it will Look in this shot
+        - ![batch Processing preview](AppScripts/Analytics/shots/batch_processing_2.png)
+
+- `4_combile_mulitple_sheets_data_with_batch_processing.js` ✅
+    - All is same as `4_combile_mulitple_sheets_data_with_batch_processing`.
+    - only *Batches processed Progress* is missing
+- `3_combine_multiple_sheets_data_with_diff_headers_into_one.js` ❌
+    - All is same as `4_combile_mulitple_sheets_data_with_batch_processing`, but it processes all the sheets at once instead of batchwise processing, that's the only difference.
+    - ![data combined from all sheet at once](AppScripts/Analytics/shots/3_combine.png)
+
+- `2_combine_multiple_sheets_data_with_diff_headers_into_one.js` ❌
+    - All is same as `3_combine_multiple_sheets_data_with_diff_headers_into_one`, but below features are part of combining process and it creates overload on script exeuction and limit reached issue.
+        - Auto-fill Company Country based on Company City mapping
+        - Create Filter_CombinedData sheet with vertical headers and checkboxes
+- 
+
 ### 7july25_554pm
 - `combine_multiple_sheets_data_with_diff_headers_into_one.js`
     - Combines data from all sheets (excluding ❌ and specified sheets) into a single `CombinedData` sheet, aligning different headers automatically.
