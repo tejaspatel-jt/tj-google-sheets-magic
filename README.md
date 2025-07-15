@@ -1,4 +1,10 @@
 
+### 15july25_840pm
+- `merge_2_columns_into_one.js` ✅
+    - If "Title" is empty, it takes the value from "Job title".
+    - If both columns have values, it highlights those rows in light red.
+    - If there are no conflicts, it deletes the "Job title" column after merging.
+
 ### 14july25_943pm
 - `5_combile_mulitple_sheets_data_with_batch_processing_progress.js` ✅✅
     - This script provides 4 separate utility functions for Google Sheets
