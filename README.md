@@ -1,4 +1,22 @@
 
+### 16july25_846pm
+- `autoFillMissingByKeyMap_3.js`
+    - It uses a mapping of existing key-value pairs to fill in missing values.
+    - The target sheet, key column, and value column are configurable.
+    - It highlights the filled cells with a specified color.
+    - It provides user feedback through toasts and alerts.    
+- `cleanAndAggregateLeads_2.js`
+    - It collects data from all valid sheets, excluding those with "❌" in their name or specified in an exclusion list.
+    - It normalizes the data according to a predefined set of headers.
+    - region mapping is applied based on company country.
+    - The output is placed in a new sheet named "Lead_CleanedData".
+- `generateSheetColumnMatrix_1.js`
+    - The output is placed in a new sheet named "All_Sheet_Columns".
+    - The script collects all unique headers from the sheets and aligns the data accordingly.
+    - It skips empty sheets and those with names containing "CombinedData" or "Old".
+    - The first column of the output contains the sheet names.
+    - from 2nd row onwards, it lists the headers of each sheet.
+
 ### 15july25_840pm
 - `merge_2_columns_into_one.js` ✅
     - If "Title" is empty, it takes the value from "Job title".
