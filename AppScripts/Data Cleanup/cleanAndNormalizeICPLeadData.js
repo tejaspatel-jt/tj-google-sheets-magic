@@ -15,7 +15,7 @@ function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('🛠️ Tejas Cleanup Tools 🚀')
     .addItem('Freeze First Row in All Sheets', 'freezeFirstRowInAllSheets')
-    .addItem('🧹 Clean & Normalize ICP Lead Data', 'cleanAndAggregateLeads')
+    .addItem('🧹 Clean & Normalize ICP Lead Data', 'cleanAndNormalize_ICP_Lead_Data')
     .addToUi();
 }
 
@@ -29,7 +29,7 @@ function freezeFirstRowInAllSheets() {
 }
 
 // 2. Clean and aggregate leads data based on specified headers
-function cleanAndAggregateLeads() {
+function cleanAndNormalize_ICP_Lead_Data() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   ss.toast('Cleaning & Normalizing Lead Data...', '⚠️ Attention ⚠️', -1);
 

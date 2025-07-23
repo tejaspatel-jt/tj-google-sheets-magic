@@ -43,6 +43,7 @@ function generateSheetColumnMatrix() {
     const name = sheet.getName();
     return !name.includes("❌") &&
            !excludedSheets.includes(name) &&
+           !name.toLowerCase().includes("missing") &&
            !name.toLowerCase().includes("combineddata") &&
            !name.toLowerCase().includes("old");
   });

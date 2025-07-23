@@ -1,4 +1,34 @@
 
+### 23july25_846pm
+- `CleanupAndSortLeadsSheetsData.js`
+    - This has lot of good and roubust versions of cleaning functions - IN PROGRESS
+
+- `generateMissingCountry_5.js`
+    - This function generates a report of missing 'Company Country' in the 'Lead_CleanedData' sheet.
+    - It checks for missing country based on the presence of 'Company City' and 'Company State'.
+    - It creates a new sheet named 'MissingCountry' or clears it if it already exists.
+    - It populates the sheet with rows where 'Company Country' is missing.
+    - Rows with both city and state missing are ignored.
+    - Rows where state exists but city is missing can be excluded via configuration.
+    - Includes rows where city is present but state is missing, or both city and state are present.
+    - Configuration options:
+       - `targetSheetName`: Name of the source sheet to check for missing country.
+       - `outputSheetName`: Name of the output sheet where results will be written.
+       - `columns`: Object defining the column names for city, state, and country.
+       - `excludeStateMissingCity`: Boolean to exclude rows where state is present but city is missing.
+
+- `autoFillMissingByKeyMap_4.js`
+    - Generates a detailed report of missing details in the 'Lead_CleanedData' sheet.
+    - It checks pairs or triplets of columns for missing data and conflicts.
+    - The report is generated in a new or cleared sheet named 'MissingDetails'.
+    - Handles both pairs (e.g., City and Country) and triplets (e.g., State, City, and Country).
+    - It can also detect conflicts where multiple values exist for a single key.a
+    -     - Configuration is done at the top of the script for easy modification.
+    -         - like which columns to check, and whether to include pairs or triplets.
+    -         - like `targetSheetName` for defining the source sheet name.
+    -         - like `columnSets` for defining which columns to check.
+    -         - like `missingSheetName` for defining the output sheet name.
+
 ### 16july25_846pm
 - `autoFillMissingByKeyMap_3.js`
     - It uses a mapping of existing key-value pairs to fill in missing values.
