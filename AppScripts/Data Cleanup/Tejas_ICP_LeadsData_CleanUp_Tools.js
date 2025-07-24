@@ -14,12 +14,21 @@
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('🛠️ Tejas Cleanup Tools 🚀')
+
+    // CLEAN-UP PART
     .addItem('1️⃣ Freeze First Row in All Sheets ✅', 'freezeFirstRowInAllSheets')
-    .addItem('2️⃣ 📋 Get Columns of All Sheet excluding ❌ and Specified ✅', 'generateSheetColumnMatrix')
+    .addItem('2️⃣ 📋 Get Columns of All Sheet (Excluding ❌ & Specified) ✅', 'generateSheetColumnMatrix')
     .addItem('3️⃣ 🧹 Clean & Normalize ICP Lead Data ✅', 'cleanAndNormalize_ICP_Lead_Data')
-    .addItem('4️⃣ ➕➕ Fill City State Country Region Very Independently and Flexibly Roubust 💫➕➕✅', 'fillCityStateCountrySwapAndFillFromMapping_Master_Independently_Flexibly_Robust')
-    .addItem('5️⃣ ➕➕ 🧠 Categorize Scattered Job Titles into Sorted Designations ✅', 'categorizeScatteredTitlesIntoDesignation')
-    .addItem('6️⃣ ➕➕ Normalize Regions in Region Column ➕➕ ✅', 'normalizeRegionsInSheet')
+    .addItem('4️⃣ ➕➕ ‼️ Deduplicate by Email (Max Filled Row ) 📧 ✅', 'deduplicateByEmail_With_MaxFilledRow')
+    .addItem('5️⃣ ➕➕ ‼️ Deduplicate by Email (Max Filled Row) & 🛑 Delete Empty Bottom Rows 🗑️ ✅', 'deduplicateByEmail_With_MaxFilledRow_And_Delete_EmptyRowsatBottom_ByGemini')
+    .addItem('6️⃣ ➕➕ 🗺️ Fill City-State-Country-Region Very Independently and Flexibly Roubust 💫  ✅', 'fillCityStateCountrySwapAndFillFromMapping_Master_Independently_Flexibly_Robust')
+    .addItem('7️⃣ ➕➕ 🧠 Categorize Job Titles into Designation 📊 ✅', 'categorizeScatteredTitlesIntoDesignation')
+    .addItem('8️⃣ ➕➕ 📏 Normalize Company Size Intervals', 'normalize_CompanySize_Intervals')
+    .addItem('8️⃣ ➕➕ Normalize Regions 🌐 ✅', 'normalizeRegionsInSheet')
+
+    // MERGING PART
+    .addItem('🔗 ➕ Merge Sheets from External Spreadsheet Tabs 📂', 'merge_External_SpreadSheet_Tabs_Header_Union')
+    
     .addItem('➕➕ Fix CityStateCountry SwapAndFill From Mapping CityStateCountryRegionMapping', 'fixCityStateCountrySwapAndFillFromMapping')
     .addItem('➕➕ Generate Master Mapping Sheet from Existing Mapping and Newly Created Missing Geo Mapping ➕➕✅', 'generateMasterMappingFromExistingAndNewMapping')
     .addItem('➕➕ Fill City State Country Region Flexibly ➕➕✅', 'fillCityStateCountrySwapAndFillFromMapping_Master_Flexibly')
@@ -394,7 +403,207 @@ function cleanAndNormalize_ICP_Lead_Data() {
 
 }
 
-// 4. Fix City-State-Country-Region Mapping is Wrong by SwapAndFill
+
+/**
+ * 📍 Removes duplicate rows from 'Lead_CleanedData' sheet based on 'Email' column
+ * 📧 Keeps the most filled row for each unique Email
+ * 🧹 Deletes rows with fewer non-empty values (based on column count)
+ * 🎯 Ignores blank emails
+ * 
+ * 🔁 Safe for repeat use
+ * 📊 Toast + Alert shows progress and deletion count
+ */
+function deduplicateByEmail_With_MaxFilledRow() {
+  const config = {
+    sheetName: 'Lead_CleanedData',
+    uniqueKeyColumn: 'Email'
+  };
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  const sheet = ss.getSheetByName(config.sheetName);
+
+  if (!sheet) {
+    ui.alert(`❗ Sheet "${config.sheetName}" not found.`);
+    return;
+  }
+
+  ss.toast(`🔄 Deduplication started on '${config.sheetName}'...`, 'Processing', -1);
+
+  const data = sheet.getDataRange().getValues();
+  if (data.length < 2) {
+    ui.alert('📭 No data rows found.');
+    return;
+  }
+
+  const headers = data[0];
+  const emailIdx = headers.indexOf(config.uniqueKeyColumn);
+  if (emailIdx < 0) {
+    ss.toast('❌ Email column not found', 'Error', 5);
+    ui.alert(`❗ Column '${config.uniqueKeyColumn}' not found in header.`);
+    return;
+  }
+
+  const emailMap = new Map(); // lowercase email → { row, rowIndex, filledCount }
+
+  // Step 1: Determine best row per email
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    const email = (row[emailIdx] || '').toString().trim().toLowerCase();
+    if (!email) continue;
+
+    const filledCount = row.filter(cell => String(cell).trim() !== '').length;
+    const existing = emailMap.get(email);
+
+    if (!existing || filledCount > existing.filledCount) {
+      emailMap.set(email, { row, rowIndex: i + 1, filledCount });
+    }
+  }
+
+  // Step 2: Track which rows to retain
+  const keepRowIndexes = new Set([...emailMap.values()].map(obj => obj.rowIndex));
+  const finalData = [headers];
+  let deletedCount = 0;
+
+  for (let i = 1; i < data.length; i++) {
+    if (keepRowIndexes.has(i + 1)) {
+      finalData.push(data[i]);
+    } else {
+      deletedCount++;
+    }
+  }
+
+  // Step 3: Clear and rewrite the sheet
+  sheet.clearContents();
+  sheet.getRange(1, 1, finalData.length, headers.length).setValues(finalData);
+
+  ss.toast(`✅ Deduplication complete. Removed ${deletedCount} duplicate row(s).`, 'Done ✅', 5);
+  ui.alert(
+    "✅ Success ✅",
+    `✅ Deduplication complete!
+    📧 Rows removed: ${deletedCount}`,
+    ui.ButtonSet.OK
+  );
+}
+
+/**
+ * 📍 Removes duplicate rows from 'Lead_CleanedData' sheet based on 'Email' column
+ * 📧 Keeps the most filled row for each unique Email
+ * 🧹 Deletes rows with fewer non-empty values (based on column count)
+ * 🎯 Ignores blank emails
+ * 🧼 Also Deletes empty rows at the bottom of the sheet.
+ *
+ * 🔁 Safe for repeat use
+ * 📊 Toast + Alert shows progress and deletion count
+ */
+function deduplicateByEmail_With_MaxFilledRow_And_Delete_EmptyRowsatBottom_ByGemini() {
+  const config = {
+    sheetName: 'Copy of Copy of Lead_CleanedData',
+    uniqueKeyColumn: 'Email'
+  };
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  const sheet = ss.getSheetByName(config.sheetName);
+
+  if (!sheet) {
+    ui.alert(`❗ Sheet "${config.sheetName}" not found.`);
+    return;
+  }
+
+  ss.toast(`🔄 Deduplication started on '${config.sheetName}'...`, 'Processing', -1);
+
+  // Get all data at once
+  const dataRange = sheet.getDataRange();
+  const allData = dataRange.getValues();
+
+  if (allData.length < 2) {
+    ui.alert('📭 No data rows found.');
+    return;
+  }
+
+  const headers = allData[0];
+  const emailIdx = headers.indexOf(config.uniqueKeyColumn);
+  if (emailIdx < 0) {
+    ss.toast('❌ Email column not found', 'Error', 5);
+    ui.alert(`❗ Column '${config.uniqueKeyColumn}' not found in header.`);
+    return;
+  }
+
+  const emailMap = new Map(); // lowercase email → { rowData, filledCount }
+
+  // Step 1: Determine best row per email (process in memory)
+  // We're iterating from 1 as headers are at index 0
+  for (let i = 1; i < allData.length; i++) {
+    const row = allData[i];
+    const email = (row[emailIdx] || '').toString().trim().toLowerCase();
+
+    // Ignore blank emails as per original logic
+    if (!email) continue;
+
+    // Calculate filled count more efficiently
+    let filledCount = 0;
+    for (let j = 0; j < row.length; j++) {
+      if (String(row[j]).trim() !== '') {
+        filledCount++;
+      }
+    }
+
+    const existing = emailMap.get(email);
+
+    if (!existing || filledCount > existing.filledCount) {
+      emailMap.set(email, { rowData: row, filledCount: filledCount });
+    }
+  }
+
+  // Step 2: Build the new data array (header + unique rows)
+  const newData = [headers]; // Start with the header row
+
+  // Add the best rows from the map
+  for (const entry of emailMap.values()) {
+    newData.push(entry.rowData);
+  }
+
+  // Calculate deleted count before clearing/writing
+  const deletedCount = allData.length - newData.length;
+
+  // Step 3: Write the new data back to the sheet
+  // Clear existing content to ensure all old rows are gone if new data is smaller
+  sheet.clearContents(); // Clear only contents, keep formatting
+  // If you also want to clear formatting, use sheet.clear()
+
+  if (newData.length > 0) {
+    // Write all new data at once
+    sheet.getRange(1, 1, newData.length, newData[0].length).setValues(newData);
+  } else {
+    // This case should ideally not happen if there's a header, but good for robustness
+    // If only header remains, it will be handled by sheet.clearContents()
+  }
+
+  // Resize the sheet to fit the new data, removing extra rows/columns
+  // This is important to truly 'delete' the excess rows from the sheet's dimensions
+  if (newData.length < allData.length) { // Only resize if rows were removed
+      sheet.deleteRows(newData.length + 1, allData.length - newData.length);
+  }
+  // You might also consider adjusting columns if the number of columns changed,
+  // but typically deduplication doesn't change column count.
+
+  const uniqueCount = sheet.getLastRow() - 1; // exclude header
+
+  ss.toast(`✅ Deduplication complete. Removed ${deletedCount} row(s).`, 'Done ✅', 5);
+  ui.alert(
+    "✅ Success ✅",
+    `✅ Deduplication complete!
+📧 Rows removed: ${deletedCount}
+📊 Unique rows remaining: ${uniqueCount}`,
+    ui.ButtonSet.OK
+  );
+}
+
+
+
+
+// 14. Fix City-State-Country-Region Mapping is Wrong by SwapAndFill
 /**
  * 📍 Normalizes geographic data in 'Lead_CleanedData'
  * - Fixes swapped City, State, Country values (↔ any 2 or all 3)
@@ -3402,17 +3611,22 @@ function fixCityCountrySwapAndFillFromMapping() {
 /**
  * Categorizes job titles into predefined standard roles and inserts a 'Designation' column in the configured sheet.
  * 
- * Roles:
- *   1. Founder / CEO
- *   2. CTO / CIO / IT Head
- *   3 .VP / Director of Engineering
- *   4. QA Manager / QA Lead
- *   5. Product Owner / Manager
- *   6. Project Manager
- * Configuration:
- * - `sheetName`: The name of the source sheet.
- * - `titleColumnName`: The column containing job titles.
- * - `designationColumnName`: The column where categorization will be placed or created.
+ * 👉 Roles:
+ *      1. Founder / CEO
+ *      2. CTO / CIO / IT Head
+ *      3 .VP / Director of Engineering
+ *      4. QA Manager / QA Lead
+ *      5. Product Owner / Manager
+ *      6. Project Manager
+ * 
+ * ⚙️ Configuration:
+ *      - `sheetName`: The name of the source sheet.
+ *      - `titleColumnName`: The column containing job titles.
+ *      - `designationColumnName`: The column where categorization will be placed or created.
+ * 
+ * ✅ Overwrites existing 'Designation' values if they exist to handle if the we change categorization logic with regex.
+ * ❗ Alerts if the sheet or title column is not found.
+ * 
  */
 function categorizeScatteredTitlesIntoDesignation() {
   const config = {
@@ -3493,9 +3707,173 @@ function categorizeScatteredTitlesIntoDesignation() {
   // Write back results
   sheet.getRange(2, 1, data.length, sheet.getLastColumn()).setValues(data);
 
-  ss.toast('Categorization complete ✅', 'Done', -1);
-  ui.alert(`✅ Job titles successfully categorized for ${data.length} rows in '${config.sheetName}'.`);
+  // ss.toast('Categorization complete ✅', 'Done', -1);
+  ss.toast(`Categorization of Job Titles complete ✅ for ${data.length} rows in '${config.sheetName}' sheet.`, '✅ Done ✅', -1);
+  // ui.alert(`✅ Job titles successfully categorized for ${data.length} rows in '${config.sheetName}'.`);
+
+  ui.alert(
+    "✅ Success ✅",
+    `✅ Job titles successfully categorized into Designations for ${data.length} rows in '${config.sheetName}' sheet.`,
+    ui.ButtonSet.OK
+  );
+
 }
+
+
+/**
+ * 📏 Normalize Company Size Intervals with Output Column Configuration 🏢➡️📊
+ * 
+ * 🧠 This function cleans and standardizes company size data by mapping numeric values
+ * from either '# Employees' (preferred if non-empty) or 'Size of Company' columns
+ * into defined size intervals such as '0-10', '11-50', etc.
+ * 
+ * - It extracts the first number from each source cell (ignoring commas and plus).
+ * - Matches this number to configured intervals.
+ * - Writes the normalized label into a configurable output column.
+ * - If the output column does not exist, it creates the column immediately 
+ *   after the 'Size of Company' column (or '# Employees' if 'Size of Company' is missing).
+ * - If output column is the same as 'Size of Company', then it overwrites in place.
+ * - Skips empty or invalid values by labeling them as 'NA'.
+ * 
+ * 🔁 Safe to rerun multiple times; doesn't alter unchanged cells unnecessarily.
+ * 📊 Displays progress with toast and final UI alert.
+ */
+function normalize_CompanySize_Intervals() {
+  const config = {
+    sheetName: 'Leads_MasterData', // Set your actual master sheet name here
+    columns: {
+      employees: '# Employees',
+      sizeOfCompany: 'Size of Company',
+      outputColumn: 'Size of Company' // Can be same as sizeOfCompany to overwrite, Yes We have kept the same
+    },
+    intervals: [
+      { label: '0 - 10', min: 0, max: 10 },
+      { label: '11 - 50', min: 11, max: 50 },
+      { label: '51 - 200', min: 51, max: 200 },
+      { label: '201 - 500', min: 201, max: 500 },
+      { label: '501 - 1000', min: 501, max: 1000 },
+      { label: '1001 - 2000', min: 1001, max: 2000 },
+      { label: '2001 - 3000', min: 2001, max: 3000 },
+      { label: '3001 - 4000', min: 3001, max: 4000 },
+      { label: '4001 - 5000', min: 4001, max: 5000 },
+      { label: '5001 - 10000', min: 5001, max: 10000 },
+      { label: '10001 - 20000', min: 10001, max: 20000 },
+      { label: '20001 - 30000', min: 20001, max: 30000 },
+      { label: '30001 - 40000', min: 30001, max: 40000 },
+      { label: '50001+', min: 50001, max: Number.MAX_SAFE_INTEGER }
+    ]
+  };
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+
+  const sheet = ss.getSheetByName(config.sheetName);
+  if (!sheet) {
+    ui.alert(`❗ Sheet "${config.sheetName}" not found.`);
+    return;
+  }
+
+  // ✅ Toast: Operation start
+  ss.toast('🔄 Starting company size normalization...', 'Processing', -1);
+
+  const dataRange = sheet.getDataRange();
+  const values = dataRange.getValues();
+  const headers = values[0];
+
+  // 🔍 Locate relevant columns
+  const employeesCol = headers.indexOf(config.columns.employees);
+  const sizeCol = headers.indexOf(config.columns.sizeOfCompany);
+  const outputColName = config.columns.outputColumn.trim();
+  let outputCol = headers.indexOf(outputColName);
+
+  if (employeesCol < 0 || sizeCol < 0) {
+    ui.alert(`❗ Required columns missing. Ensure both '${config.columns.employees}' and '${config.columns.sizeOfCompany}' exist.`);
+    return;
+  }
+
+  // 🔄 Handle output column creation or clearing existing data if present
+  if (outputCol === -1) {
+    // 🔧 Prefer insertion after 'Size of Company', fallback to '# Employees'
+    const insertAfterCol = sizeCol !== -1 ? sizeCol : employeesCol;
+    sheet.insertColumnAfter(insertAfterCol + 1);
+    outputCol = insertAfterCol + 1;
+    headers.splice(outputCol, 0, outputColName);
+    values[0] = headers; // Reflect updated header in memory
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]); // Write new header to sheet
+  } else if (outputCol !== sizeCol && outputColName !== config.columns.sizeOfCompany) {
+    // 🧹 Clear existing output column content (except header)
+    sheet.getRange(2, outputCol + 1, sheet.getLastRow() - 1, 1).clearContent();
+  } else if (outputColName === config.columns.sizeOfCompany) {
+    // ✍️ Overwrite existing 'Size of Company'
+    outputCol = sizeCol;
+  }
+
+  // 🔍 Extracts the first number from a string, ignoring commas and plus signs (cleaned)
+  function extractFirstNumber(str) {
+    if (str === null || str === undefined || String(str).trim() === '') return NaN;
+    const cleaned = String(str).replace(/[,+]/g, '').trim();
+    const match = cleaned.match(/^\d+/);
+    return match ? parseInt(match[0], 10) : NaN;
+  }
+
+  // 🧠 Returns the interval label for a given number or 'NA' if invalid
+  function getIntervalLabelFromNumber(num) {
+    if (isNaN(num) || num < 0) return 'NA';
+    const interval = config.intervals.find(interval => num >= interval.min && num <= interval.max);
+    return interval ? interval.label : 'NA';
+  }
+
+  let updateCount = 0;
+  const outputData = [];
+
+  // 🔁 Process all data rows
+  for (let i = 1; i < values.length; i++) {
+    const row = values[i];
+
+    // 🔎 Pick '# Employees' if valid else 'Size of Company'
+    const sourceVal = (employeesCol !== -1 && row[employeesCol] !== null && String(row[employeesCol]).trim() !== '') ?
+                      row[employeesCol] :
+                      (sizeCol !== -1 && row[sizeCol] !== null && String(row[sizeCol]).trim() !== '') ?
+                      row[sizeCol] : '';
+
+    let label = 'NA';
+
+    // 📊 If there's a value, normalize it
+    if (sourceVal !== '') {
+      const num = extractFirstNumber(sourceVal);
+      label = getIntervalLabelFromNumber(num);
+    }
+
+    outputData.push([label]);
+
+    // ✍️ Track changes to avoid unnecessary writes
+    if (outputCol !== -1 && row[outputCol] !== label) {
+      updateCount++;
+    }
+  }
+
+  // 📝 Write all normalized labels back in one batch to the output column
+  if (outputCol !== -1 && outputData.length > 0) {
+    sheet.getRange(2, outputCol + 1, outputData.length, 1).setValues(outputData);
+  } else if (outputCol !== -1) {
+    // 🧹 Clear column if no data rows but output column exists
+    sheet.getRange(2, outputCol + 1, sheet.getLastRow() - 1, 1).clearContent();
+  }
+
+  // ✅ Toast: Operation complete
+  ss.toast(`✅ Company size normalization complete! Rows updated: ${updateCount}`, '✅ Done', 5);
+
+  // 🛎 Final UI alert with multiline message and OK button
+  ui.alert(
+    "✅ Success ✅",
+    `Company size intervals normalization completed successfully.\n
+    Rows updated: ${updateCount}`,
+    ui.ButtonSet.OK
+  );
+}
+
+
+
 
 /**
  * Normalizes various region names in 'Lead_CleanedData' sheet to a fixed set of 8 regions.
@@ -3592,3 +3970,164 @@ function normalizeRegionsInSheet() {
   );
 }
 
+
+/**
+ * 📄 Merge External Spreadsheets: Union Headers + Optional Deduplication, Case Control 🧾🌐
+ *
+ * 🧠 Use-case:
+ * Merge remote sheets from different spreadsheets — auto aligns headers (case-insensitively if set),
+ * (optionally) deduplicates based on most complete row per key.
+ * 
+ * ✅ Keeps most complete row when deduplicating based on non-empty field count.
+ *
+ * ⚙️ Configuration
+ * - sourceFiles: [{ fileId: string, sheetName: string }]
+ * - outputSheet: string (target sheet where merged data is written)
+ * - deduplication: {
+ *     allowDuplicates: boolean,
+ *     key: string (required if allowDuplicates is false)
+ *   }
+ * - options: {
+ *     caseSensitiveHeaders: boolean
+ *   }
+ */
+function merge_External_SpreadSheet_Tabs_Header_Union() {
+  const config = {
+    sourceFiles: [
+      {
+        fileId: '1UksnP4CUXIMm8NkxiLxi7Yc2tqmXORMbLNcJS71K-xw',
+        sheetName: 'Lead_CleanedData'
+      },
+      {
+        fileId: '1zCpceVZRq_X-L0K7czdjHd3p6ME4kkTl2MzD4ev8Icw',
+        sheetName: 'Lead_CleanedData'
+      }
+    ],
+    outputSheet: 'Leads_MasterData',
+    deduplication: {
+      allowDuplicates: true, // ❌ Change to false to deduplicate
+      key: 'Email'           // Used only when deduplication is enabled
+    },
+    options: {
+      caseSensitiveHeaders: false // 🔠 Treat 'Region' and 'region' as same?
+    }
+  };
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  const allHeadersMap = new Map(); // Key: header (adjusted case) → original header text
+  const sheetData = [];
+
+  ss.toast("🔄 Merging & processing external sources...", "Processing", -1);
+
+  // 🛠 Step 1: Read data and build global header set
+  config.sourceFiles.forEach(({ fileId, sheetName }) => {
+    const sourceSS = SpreadsheetApp.openById(fileId);
+    const sheet = sourceSS.getSheetByName(sheetName);
+    if (!sheet) throw new Error(`❌ Sheet "${sheetName}" not found in file: ${fileId}`);
+
+    const values = sheet.getDataRange().getValues();
+    const headers = values[0];
+    const rows = values.slice(1);
+
+    const normalizedHeaders = headers.map(h =>
+      config.options.caseSensitiveHeaders ? h.trim() : h.trim().toLowerCase()
+    );
+
+    // Map normalized header to a canonical version (use first one seen)
+    normalizedHeaders.forEach((norm, i) => {
+      if (!allHeadersMap.has(norm)) {
+        allHeadersMap.set(norm, headers[i].trim());
+      }
+    });
+
+    sheetData.push({ normalizedHeaders, originalHeaders: headers, rows });
+  });
+
+  const finalHeaders = Array.from(allHeadersMap.values()); // Our merged header structure
+  const finalData = [];
+
+  // 🏗 Step 2: Re-align each source row to full column structure
+  sheetData.forEach(({ normalizedHeaders, originalHeaders, rows }) => {
+    const headerIndex = normalizedHeaders.reduce((map, h, i) => {
+      map[h] = i;
+      return map;
+    }, {});
+
+    rows.forEach(row => {
+      const alignedRow = finalHeaders.map(h => {
+        const normalizedH = config.options.caseSensitiveHeaders ? h.trim() : h.trim().toLowerCase();
+        const i = headerIndex[normalizedH];
+        return i !== undefined ? row[i] : '';
+      });
+      finalData.push(alignedRow);
+    });
+  });
+
+  // 🧹 Step 3: Optional deduplication
+  let cleanedData = finalData;
+  let removedCount = 0;
+  const { allowDuplicates, key } = config.deduplication;
+
+  if (!allowDuplicates) {
+    const dedupKeyNorm = config.options.caseSensitiveHeaders ? key : key.toLowerCase();
+    const keyIndex = finalHeaders.findIndex(h => {
+      return config.options.caseSensitiveHeaders
+        ? h === key
+        : h.toLowerCase() === dedupKeyNorm;
+    });
+
+    if (keyIndex === -1) throw new Error(`❌ Deduplication key "${key}" not found in headers`);
+
+    const recordMap = new Map();
+
+    for (const row of finalData) {
+      const rawKey = String(row[keyIndex]).trim();
+      const normKey = config.options.caseSensitiveHeaders ? rawKey : rawKey.toLowerCase();
+      if (!normKey) continue;
+
+      const nonEmptyCount = row.filter(cell => cell !== '' && cell !== null).length;
+      const existing = recordMap.get(normKey);
+
+      if (!existing || nonEmptyCount > existing.nonEmptyCount) {
+        recordMap.set(normKey, { row, nonEmptyCount });
+      } else {
+        removedCount++;
+      }
+    }
+
+    cleanedData = Array.from(recordMap.values()).map(x => x.row);
+  }
+
+  // 📝 Step 4: Output into structured & cleared target sheet
+  let targetSheet = ss.getSheetByName(config.outputSheet);
+  if (!targetSheet) {
+    targetSheet = ss.insertSheet(config.outputSheet);
+  } else {
+    // output.clearContents(); // 🔄 Controlled clear Only cell values and formulas (preserves formatting & structure)
+    targetSheet.clear(); // 🔄 Everything – values + formatting + notes + merges
+  }
+
+  targetSheet.getRange(1, 1, 1, finalHeaders.length).setValues([finalHeaders]);
+  if (cleanedData.length > 0) {
+    targetSheet.getRange(2, 1, cleanedData.length, finalHeaders.length).setValues(cleanedData);
+  }
+
+  targetSheet.setFrozenRows(1); // Freeze header row for better UX
+
+  // ✅ Done: Show summary
+  ss.toast("✅ Merge completed", "Done ✅", 5);
+  ui.alert(
+    "✅ Merge Completed",
+    `📄 Total Rows Imported: ${finalData.length}\n🧹 Duplicates Removed: ${removedCount}\n✅ Final Rows Written: ${cleanedData.length}\n📌 Total Columns Merged: ${finalHeaders.length}`,
+    ui.ButtonSet.OK
+  );
+  ui.alert(
+    "✅ Merge Complete",
+    `📄 Total Rows Imported: ${finalData.length}
+    🧹 Duplicates Removed: ${removedCount}
+    ✅ Final Rows Written: ${cleanedData.length}
+    📌 Total Columns Merged: ${finalHeaders.length}`,
+    ui.ButtonSet.OK
+  );
+}

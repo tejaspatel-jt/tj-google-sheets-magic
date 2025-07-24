@@ -1,4 +1,31 @@
 
+
+### 24july25_0346pm
+
+#### `Tejas_ICP_LeadsData_CleanUp_Tools.js`  
+- This has whole big list of cleanup functions to be applied any scrapped data pasted with `Ganja Smoked 🌿`
+    - ![Weapons Loaded](<AppScripts/Analytics/shots/saf safai weapons.png>)
+
+#### `normalizeCompanySizeIntervals_7.js`  
+- 🧠 This function cleans and standardizes company size data by mapping numeric values from either `# Employees` (preferred if non-empty) or `Size of Company` columns into defined size intervals such as `0-10`, `11-50`, etc.
+
+  - It extracts the first number from each source cell (ignoring commas and plus).  
+  - Matches this number to configured intervals.  
+  - Writes the normalized label into a configurable output column.  
+  - If the output column doesn’t exist, it creates it right after 'Size of Company' (or '# Employees' if 'Size of Company' is missing).  
+  - If output column is the same as 'Size of Company', it overwrites in place.  
+  - Skips empty or invalid values by labeling them as 'NA'.  
+  - Safe to rerun multiple times; doesn’t alter unchanged cells unnecessarily.  
+  - Displays progress with toast and final UI alert.  
+
+  - **Configuration options**:  
+      - `sourceColumns`: Object defining the input columns ('# Employees' and 'Size of Company').  
+      - `outputColumn`: Name of the column for normalized labels.  
+      - `sizeIntervals`: Array of interval ranges (e.g., ['0-10', '11-50', '51-200']).  
+      - `overwrite`: Boolean to allow overwriting 'Size of Company' if set as output.
+
+------------------------------------
+
 ### 23july25_846pm
 - `CleanupAndSortLeadsSheetsData.js`
     - This has lot of good and roubust versions of cleaning functions - IN PROGRESS
