@@ -43,6 +43,7 @@ function onOpen() {
     .addItem('➕➕ Fill Missing Country&Region from CityStateCountryRegionMapping sheet ➕➕ ✅', 'fillMissingCountryRegionFromMapping')
     .addItem('➕➕ correct City Country Mapping ✅', 'correctCityCountryMapping')
     .addItem('➕➕ Correct citystatecountryregion in LeadCleanedData From right CityStateCountryRegionMapping sheet ❌', 'fixLeadCleanedDataFromMapping')
+    .addItem('Combine Data (Exclude ❌ and Specified Sheets)', 'mergeSheetsByHeaders')
     .addToUi();
     
 }
@@ -140,7 +141,7 @@ function generateSheetColumnMatrix() {
   // outputSheet.setFrozenRows(1);
 
   // 🔒 Freeze first column
-  sheet.setFrozenColumns(1);
+  outputSheet.setFrozenColumns(1);
 
   // ✅ COMPLETE TOAST + ALERT
   ss.toast('Header scan completed ✅', '✅ Done', 3);
@@ -173,12 +174,18 @@ function generateSheetColumnMatrix() {
  */
 function cleanAndNormalize_ICP_Lead_Data() {
   const config = {
-    excludedSheets: ['CombinedData', 'Analytics', 'Filter_CombinedData', 'All_Sheet_Columns', 'Lead_CleanedData'],
+
+    excludedSheets: [ // Exact names to skip
+      'CombinedData', 'Analytics', 'Filter_CombinedData', 'All_Sheet_Columns', 'Lead_CleanedData','Master_GeoMapping'
+    ],
+
+    excludedNameIncludes: ['❌', 'missing', 'combineddata', 'old'],  // Dynamic exclusions
+    
     outputSheetName: 'Lead_CleanedData',
 
     // Define desired headers with aliases for flexible matching column names
     desiredHeaders: [
-      { output: 'Email', aliases: [] },
+      { output: 'Email', aliases: ['Work email'] },
       { output: 'First Name', aliases: ['First Name'] },
       { output: 'Last Name', aliases: ['Last Name'] },
       { output: 'Title', aliases: ['Job Title'] },
@@ -192,7 +199,7 @@ function cleanAndNormalize_ICP_Lead_Data() {
       { output: 'Company City', aliases: ['Company City', 'City'] },
       { output: 'Company State', aliases: ['Company State', 'State'] },
       { output: 'Company Country', aliases: ['Company Country', 'Country'] },
-      { output: 'Region', aliases: ['Region'] } // Keep for placeholder if Region exists
+      { output: 'Region', aliases: ['Region','Location'] } // Keep for placeholder if Region exists
     ],
 
     logOptions: {
@@ -209,10 +216,11 @@ function cleanAndNormalize_ICP_Lead_Data() {
   // ✅ Toast: Start
   ss.toast('Cleaning & Normalizing ICP Lead Data...', '⚙️ Processing...', -1);
 
+
   // 🔍 Filter valid sheets (excluding system or configured excluded ones)
   const allSheets = ss.getSheets().filter(s =>
     !config.excludedSheets.includes(s.getName()) &&
-    !s.getName().includes('❌')
+    !config.excludedNameIncludes.some(inc => s.getName().toLowerCase().includes(inc.toLowerCase()))
   );
 
   const emailSet = new Set();    // To track unique emails
@@ -353,7 +361,6 @@ function cleanAndNormalize_ICP_Lead_Data() {
     return fixed;
   });
 
-  // outSheet.getRange(2, 1, combinedData.length, headers.length).setValues(combinedData);
   outSheet.getRange(2, 1, correctedData.length, finalColCount).setValues(correctedData);
   outSheet.setFrozenRows(1);
 
@@ -4005,7 +4012,7 @@ function merge_External_SpreadSheet_Tabs_Header_Union() {
     ],
     outputSheet: 'Leads_MasterData',
     deduplication: {
-      allowDuplicates: true, // ❌ Change to false to deduplicate
+      allowDuplicates: false, // ❌ Change to false to deduplicate
       key: 'Email'           // Used only when deduplication is enabled
     },
     options: {
@@ -4130,4 +4137,104 @@ function merge_External_SpreadSheet_Tabs_Header_Union() {
     📌 Total Columns Merged: ${finalHeaders.length}`,
     ui.ButtonSet.OK
   );
+}
+
+
+// 2. Combine data from all sheets except those in the exclusion list or with "❌" in their name
+function mergeSheetsByHeaders() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ui = SpreadsheetApp.getUi();
+  ss.toast('Please wait while Combining data from all the sheets.. \n YOU WILL BE NOTIFIED ONCE DONE !', '⚠️ Attention ⚠️', -1);
+
+  // Start timing
+  var startTime = new Date();
+
+  var allSheets = ss.getSheets();
+  var allHeaders = [];
+  var dataRows = [];
+  
+  // === CONFIGURABLE EXCLUSIONS ===
+  var excludeSheetNames = ["CombinedData", "Analytics", "Filter_CombinedData"]; // <-- Add any other sheet names to exclude here
+
+  // Filter out sheets with "❌" in the name or in the exclusion list
+  var validSheets = allSheets.filter(function(sheet) {
+    var name = sheet.getName();
+    var lowerName = name.toLowerCase();
+    return (
+      name.indexOf("❌") === -1 &&
+      excludeSheetNames.indexOf(name) === -1 &&
+      lowerName.indexOf("combineddata") === -1 &&
+      lowerName.indexOf("old") === -1
+    );
+  });
+  
+  // 1. Collect all unique headers
+  validSheets.forEach(function(sheet) {
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    headers.forEach(function(header) {
+      if (header && allHeaders.indexOf(header) === -1) {
+        allHeaders.push(header);
+      }
+    });
+  });
+  
+  // 2. Collect all data, mapping to the master header order, and skip empty rows
+  validSheets.forEach(function(sheet) {
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var data = sheet.getRange(2, 1, Math.max(0, sheet.getLastRow()-1), sheet.getLastColumn()).getValues();
+    var headerMap = {};
+    headers.forEach(function(header, idx) {
+      headerMap[header] = idx;
+    });
+    data.forEach(function(row) {
+      // Skip completely empty rows
+      if (row.every(function(cell) { return cell === "" || cell === null; })) return;
+      var newRow = [];
+      allHeaders.forEach(function(masterHeader) {
+        if (headerMap.hasOwnProperty(masterHeader)) {
+          newRow.push(row[headerMap[masterHeader]]);
+        } else {
+          newRow.push(""); // Fill blanks for missing columns
+        }
+      });
+      dataRows.push(newRow);
+    });
+  });
+  
+  // 3. Output to the "CombinedData" sheet
+  var outSheetName = "CombinedData";
+  var outSheet = ss.getSheetByName(outSheetName);
+  if (!outSheet) {
+    outSheet = ss.insertSheet(outSheetName);
+  } else {
+    outSheet.clearContents();
+  }
+
+  // Freeze the first row
+  outSheet.setFrozenRows(1);
+  
+  outSheet.getRange(1, 1, 1, allHeaders.length).setValues([allHeaders]);
+  if (dataRows.length > 0) {
+    outSheet.getRange(2, 1, dataRows.length, allHeaders.length).setValues(dataRows);
+  }
+
+  // End timing
+  var endTime = new Date();
+  var durationMs = endTime - startTime;
+  var seconds = Math.floor((durationMs / 1000) % 60);
+  var minutes = Math.floor((durationMs / (1000 * 60)) % 60);
+  var durationStr = '';
+  if (minutes > 0) {
+    durationStr += minutes + ' min' + (minutes > 1 ? 's' : '');
+    if (seconds > 0) durationStr += ' ';
+  }
+  if (seconds > 0 || minutes === 0) {
+    durationStr += seconds + ' sec' + (seconds !== 1 ? 's' : '');
+  }
+
+  // Count of combined rows (excluding header)
+  var combinedRowsCount = dataRows.length;
+
+  // Show alert when done, with duration and row count
+  ui.alert('Data combined successfully! ✅\n\nTime taken: ' + durationStr + '\nRows combined: ' + combinedRowsCount);
 }
